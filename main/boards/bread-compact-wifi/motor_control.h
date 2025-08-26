@@ -12,6 +12,14 @@
 #include "driver/gpio.h"
 #include "motor/motor.h"
 
+// 电机控制GPIO宏定义
+#define MOTOR_RIGHT_FORWARD GPIO_NUM_11 // 右侧电机正转引脚
+#define MOTOR_RIGHT_BACKWARD GPIO_NUM_12 // 右侧电机反转引脚
+#define MOTOR_LEFT_FORWARD  GPIO_NUM_13  // 左侧电机正转引脚
+#define MOTOR_LEFT_BACKWARD GPIO_NUM_14  // 左侧电机反转引脚
+#define MOTOR_RIGHT_PWM GPIO_NUM_9  // 右侧PWM引脚
+#define MOTOR_LEFT_PWM GPIO_NUM_10  // 左侧PWM引脚
+
 class MotorControl {
  public:
   MotorControl();

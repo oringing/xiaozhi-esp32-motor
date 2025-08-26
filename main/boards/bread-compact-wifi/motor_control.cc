@@ -13,12 +13,11 @@
 // 全局电机控制实例定义
 MotorControl* g_motor_control = nullptr;
 
+// 初始化电机驱动引脚映射（使用用户定义的宏）
 MotorControl::MotorControl()
-    : motor_driver_(GPIO_NUM_9, GPIO_NUM_10,  // 1号电机
-                    GPIO_NUM_11, GPIO_NUM_12,  // 2号电机
-                    GPIO_NUM_13, GPIO_NUM_14,  // 3号电机
-                    GPIO_NUM_8, GPIO_NUM_3,    // 4号电机
-                    GPIO_NUM_4, GPIO_NUM_5) {  // ENA/ENB引脚
+    : motor_driver_(MOTOR_RIGHT_FORWARD, MOTOR_RIGHT_BACKWARD,  // 右侧方向引脚
+                    MOTOR_LEFT_FORWARD, MOTOR_LEFT_BACKWARD,   // 左侧方向引脚
+                    MOTOR_RIGHT_PWM, MOTOR_LEFT_PWM) { // 右侧/左侧PWM引脚
   // 初始化电机驱动
   motor_driver_.Init();
 
