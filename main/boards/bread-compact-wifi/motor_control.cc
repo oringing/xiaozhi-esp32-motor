@@ -1,4 +1,4 @@
-#include "boards/bread-compact-esp32/motor_control.h"
+#include "motor_control.h"
 
 #include <string>
 

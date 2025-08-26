@@ -9,6 +9,8 @@
 #include "lamp_controller.h"
 #include "led/single_led.h"
 #include "assets/lang_config.h"
+#include "motor/motor.h"  
+#include "motor_control.h"// 引入电机控制类头文件
 
 #include <wifi_station.h>
 #include <esp_log.h>
@@ -35,6 +37,7 @@ private:
     Button touch_button_;
     Button volume_up_button_;
     Button volume_down_button_;
+    MotorControl* motor_control_ = nullptr;  // 声明 motor_control_ 电机成员变量。
 
     void InitializeDisplayI2c() {
         i2c_master_bus_config_t bus_config = {
@@ -151,9 +154,22 @@ private:
         });
     }
 
-    // 物联网初始化，逐步迁移到 MCP 协议
+    // 添加电机控制器初始化方法
+    void InitializeMotorController() {
+        ESP_LOGI(TAG, "初始化电机控制器");
+        motor_control_ = new MotorControl();  // 创建电机控制实例
+        
+        // 验证初始化是否成功（如果MotorControl有Initialize方法可在此处调用并判断）
+        ESP_LOGI(TAG, "电机控制器初始化完成");
+    }
+
+    // 物联网初始化，添加对 AI 可见设备
     void InitializeTools() {
         static LampController lamp(LAMP_GPIO);
+        // 注册电机MCP工具（如果电机控制器初始化成功）
+        if (motor_control_ != nullptr) {
+            motor_control_->InitializeTools();
+        }
     }
 
 public:
@@ -165,6 +181,7 @@ public:
         InitializeDisplayI2c();
         InitializeSsd1306Display();
         InitializeButtons();
+        InitializeMotorController();
         InitializeTools();
     }
 
@@ -187,6 +204,16 @@ public:
     virtual Display* GetDisplay() override {
         return display_;
     }
+
+        // 析构函数：释放电机控制资源
+    virtual ~CompactWifiBoard() {
+        if (motor_control_ != nullptr) {
+            delete motor_control_;
+            motor_control_ = nullptr;
+        }
+    }
+
+
 };
 
 DECLARE_BOARD(CompactWifiBoard);
