@@ -2,22 +2,25 @@
 #include "freertos/task.h"
 #include "freertos/timers.h"
 #include "motor/motor.h"
-#include <cstdint>
+#include "boards/bread-compact-wifi/motor_control.h"
 #include "esp_log.h"
+#include "driver/ledc.h"
+
 #include <cinttypes>  // 添加这行头文件
+#include <cstdint>
 
 static const char* TAG = "MotorDriver";
 
 // 构造函数：初始化引脚参数
-MotorDriver::MotorDriver(gpio_num_t right_in1, gpio_num_t right_in2,
-                         gpio_num_t left_in1, gpio_num_t left_in2,
-                         gpio_num_t right_pwm, gpio_num_t left_pwm) {
-  in_pins_[0] = right_in1;
-  in_pins_[1] = right_in2;
-  in_pins_[2] = left_in1;
-  in_pins_[3] = left_in2;
-  right_pwm_pin_ = right_pwm;
-  left_pwm_pin_ = left_pwm;
+MotorDriver::MotorDriver(gpio_num_t MOTOR_RIGHT_FORWARD, gpio_num_t MOTOR_RIGHT_BACKWARD,
+                         gpio_num_t MOTOR_LEFT_FORWARD, gpio_num_t MOTOR_LEFT_BACKWARD,
+                         gpio_num_t MOTOR_RIGHT_PWM, gpio_num_t MOTOR_LEFT_PWM) {
+  in_pins_[0] = MOTOR_RIGHT_FORWARD;
+  in_pins_[1] = MOTOR_RIGHT_BACKWARD;
+  in_pins_[2] = MOTOR_LEFT_FORWARD;
+  in_pins_[3] = MOTOR_LEFT_BACKWARD;
+  right_pwm_pin_ = MOTOR_RIGHT_PWM;
+  left_pwm_pin_ = MOTOR_LEFT_PWM;
   pwm_freq_ = 1000;  // 默认PWM频率1000Hz
 }
 
@@ -65,11 +68,29 @@ void MotorDriver::InitDirGpio()
 // 初始化PWM调速功能
 void MotorDriver::InitPwm() 
 {
-  // 配置PWM定时器（Timer0）
+  // 检查通道是否在0~7范围内
+  if (right_pwm_ch_ > LEDC_CHANNEL_7 || left_pwm_ch_ > LEDC_CHANNEL_7) {
+      ESP_LOGE(TAG, "PWM channel out of range (0-7)");
+      return;
+  }
+
+  // 使用宏定义的合法PWM引脚列表（根据ESP32芯片和具体开发板调整）
+  const gpio_num_t valid_pwm_pins[] = VALID_PWM_PINS;
+
+  bool right_pin_valid = false, left_pin_valid = false;
+  for (auto pin : valid_pwm_pins) {
+      if (right_pwm_pin_ == pin) right_pin_valid = true;
+      if (left_pwm_pin_ == pin) left_pin_valid = true;
+  }
+  if (!right_pin_valid || !left_pin_valid) {
+      ESP_LOGE(TAG, "PWM pin does not support LEDC");
+      return;
+  }
+  // 配置PWM定时器（Timer1）
   ledc_timer_config_t timer_cfg;
   timer_cfg.speed_mode = MOTOR_LEDC_MODE;
   timer_cfg.duty_resolution = MOTOR_PWM_RES;
-  timer_cfg.timer_num = LEDC_TIMER_0;
+  timer_cfg.timer_num = LEDC_TIMER_2; // 使用Timer2（避免和main\boards\common\backlight.cc里的LEDC_TIMER_0，以及gpio_led.cc宏定义里的LEDC_TIMER_1冲突）
   timer_cfg.freq_hz = pwm_freq_;  // 使用当前PWM频率
   timer_cfg.clk_cfg = LEDC_AUTO_CLK;
   timer_cfg.deconfigure = false;
@@ -85,10 +106,11 @@ void MotorDriver::InitPwm()
   right_ch_cfg.gpio_num = right_pwm_pin_;
   right_ch_cfg.speed_mode = MOTOR_LEDC_MODE;
   right_ch_cfg.channel = right_pwm_ch_;
-  right_ch_cfg.timer_sel = LEDC_TIMER_0;
+  right_ch_cfg.timer_sel = LEDC_TIMER_2;  
   right_ch_cfg.duty = 0;  // 初始占空比0（停止）
   right_ch_cfg.hpoint = 0;
   right_ch_cfg.intr_type = LEDC_INTR_DISABLE;
+  right_ch_cfg.sleep_mode = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD;// 默认模式
   ledc_channel_config(&right_ch_cfg);
 
   // 配置左侧PWM通道
@@ -96,10 +118,11 @@ void MotorDriver::InitPwm()
   left_ch_cfg.gpio_num = left_pwm_pin_;
   left_ch_cfg.speed_mode = MOTOR_LEDC_MODE;
   left_ch_cfg.channel = left_pwm_ch_;
-  left_ch_cfg.timer_sel = LEDC_TIMER_0;
+  left_ch_cfg.timer_sel = LEDC_TIMER_2;  
   left_ch_cfg.duty = 0;  // 初始占空比0（停止）
   left_ch_cfg.hpoint = 0;
   left_ch_cfg.intr_type = LEDC_INTR_DISABLE;
+  left_ch_cfg.sleep_mode = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD; // 默认模式
   ledc_channel_config(&left_ch_cfg);
 }
 
@@ -150,30 +173,30 @@ void MotorDriver::Backward(uint8_t speed)
 // 左转动作
 void MotorDriver::TurnLeft(uint8_t speed) 
 {
-  // 右侧电机正向转动
+  // 右侧电机正向转动10
   gpio_set_level(in_pins_[0], 1);
   gpio_set_level(in_pins_[1], 0);
-  // 左侧电机停止
+  // 左侧电机停止00，或者反向转动01
   gpio_set_level(in_pins_[2], 0);
   gpio_set_level(in_pins_[3], 0);
 
   SetPwmSpeed(right_pwm_ch_, right_pwm_pin_, speed);
-  SetPwmSpeed(left_pwm_ch_, left_pwm_pin_, 0);
+  SetPwmSpeed(left_pwm_ch_, left_pwm_pin_, 0);// 左侧电机停止，速度为0，
   ESP_LOGI(TAG, "Turning left with speed: %u", speed);
 }
 
 // 右转动作
 void MotorDriver::TurnRight(uint8_t speed) 
 {
-  // 右侧电机停止
+  // 右侧电机停止00，或者反向转动01
   gpio_set_level(in_pins_[0], 0);
   gpio_set_level(in_pins_[1], 0);
-  // 左侧电机正向转动
+  // 左侧电机正向转动10
   gpio_set_level(in_pins_[2], 1);
   gpio_set_level(in_pins_[3], 0);
 
-  SetPwmSpeed(right_pwm_ch_, right_pwm_pin_, 0);
-  SetPwmSpeed(left_pwm_ch_, left_pwm_pin_, speed);
+  SetPwmSpeed(right_pwm_ch_, right_pwm_pin_, 0);  // 右侧电机停止，速度为0，
+  SetPwmSpeed(left_pwm_ch_, left_pwm_pin_,speed);
   ESP_LOGI(TAG, "Turning right with speed: %u", speed);
 }
 
@@ -221,7 +244,7 @@ void MotorDriver::SetPwmFrequency(uint32_t freq_hz) {
   ledc_timer_config_t timer_cfg;
   timer_cfg.speed_mode = MOTOR_LEDC_MODE;
   timer_cfg.duty_resolution = MOTOR_PWM_RES;
-  timer_cfg.timer_num = LEDC_TIMER_0;
+  timer_cfg.timer_num = LEDC_TIMER_2; // 使用Timer2（避免和Timer0、1冲突）
   timer_cfg.freq_hz = pwm_freq_;
   timer_cfg.clk_cfg = LEDC_AUTO_CLK;
   timer_cfg.deconfigure = false;

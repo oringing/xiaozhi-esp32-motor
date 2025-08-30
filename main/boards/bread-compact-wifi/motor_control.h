@@ -31,14 +31,13 @@
 
 // 电机控制GPIO宏定义，从上面列觉的合法且未被占用的GPIO引脚中选择
 //电机1、2，三个引脚在ESP32S3开发板上邻近
-#define MOTOR_RIGHT_PWM GPIO_NUM_8  // 右侧PWM引脚
-#define MOTOR_RIGHT_FORWARD GPIO_NUM_3 // 右侧电机正转引脚
-#define MOTOR_RIGHT_BACKWARD GPIO_NUM_46 // 右侧电机反转引脚
 
-// 电机3、4，三个引脚在ESP32S3开发板上邻近
-#define MOTOR_LEFT_PWM GPIO_NUM_11  // 左侧PWM引脚
-#define MOTOR_LEFT_FORWARD  GPIO_NUM_12  // 左侧电机正转引脚
-#define MOTOR_LEFT_BACKWARD GPIO_NUM_13  // 左侧电机反转引脚
+#define MOTOR_RIGHT_FORWARD GPIO_NUM_13 // 右侧电机正转引脚
+#define MOTOR_RIGHT_BACKWARD GPIO_NUM_14 // 右侧电机反转引脚
+#define MOTOR_LEFT_FORWARD  GPIO_NUM_10  // 左侧电机正转引脚
+#define MOTOR_LEFT_BACKWARD GPIO_NUM_11  // 左侧电机反转引脚
+#define MOTOR_RIGHT_PWM GPIO_NUM_12  // 右侧PWM引脚
+#define MOTOR_LEFT_PWM GPIO_NUM_9  // 左侧PWM引脚
 
 class MotorControl {
  public:

@@ -6,6 +6,7 @@
 #include "driver/gpio.h"
 #include "driver/ledc.h"
 
+// PWM configuration parameters (used for motor speed control)
 // PWM配置参数（电机调速用）
 #define MOTOR_LEDC_MODE LEDC_LOW_SPEED_MODE
 #define MOTOR_PWM_RES LEDC_TIMER_8_BIT  // 8位分辨率（速度范围0-255）
@@ -17,9 +18,9 @@
 class MotorDriver {
  public:
   // 构造函数：初始化4个方向引脚和2个PWM调速引脚
-  MotorDriver(gpio_num_t right_in1, gpio_num_t right_in2,  // 右侧电机方向引脚
-              gpio_num_t left_in1, gpio_num_t left_in2,   // 左侧电机方向引脚
-              gpio_num_t right_pwm, gpio_num_t left_pwm); // 右侧/左侧PWM引脚
+  MotorDriver(gpio_num_t MOTOR_RIGHT_FORWARD, gpio_num_t MOTOR_RIGHT_BACKWARD,
+              gpio_num_t MOTOR_LEFT_FORWARD, gpio_num_t MOTOR_LEFT_BACKWARD,
+              gpio_num_t MOTOR_RIGHT_PWM, gpio_num_t MOTOR_LEFT_PWM); // 右侧/左侧PWM引脚
 
   // 初始化电机驱动（配置GPIO方向和PWM）
   void Init();
@@ -61,8 +62,8 @@ class MotorDriver {
   gpio_num_t in_pins_[MOTOR_DIR_PIN_COUNT];  // 方向控制引脚数组[右IN1,右IN2,左IN1,左IN2]
   gpio_num_t right_pwm_pin_;                 // 右侧PWM引脚
   gpio_num_t left_pwm_pin_;                  // 左侧PWM引脚
-  ledc_channel_t right_pwm_ch_ = LEDC_CHANNEL_0;  // 右侧PWM通道
-  ledc_channel_t left_pwm_ch_ = LEDC_CHANNEL_1;   // 左侧PWM通道
+  ledc_channel_t right_pwm_ch_ = LEDC_CHANNEL_3;  // 右侧PWM通道。新通道3避开 LED 常用资源，避免和led\gpio_led.cc、boards\common\backlight.cc里的冲突
+  ledc_channel_t left_pwm_ch_ = LEDC_CHANNEL_4;   // 左侧PWM通道
   TimerHandle_t auto_stop_timer_ = nullptr;  // 自动停止定时器
   uint32_t pwm_freq_ = 1000;                 // PWM频率（默认1000Hz）
 };
