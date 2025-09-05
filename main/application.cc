@@ -8,6 +8,8 @@
 #include "font_awesome_symbols.h"
 #include "assets/lang_config.h"
 #include "mcp_server.h"
+#include "local_mqtt_protocol.h" //新增本地MQTT协议客户端
+
 
 #include <cstring>
 #include <esp_log.h>
@@ -45,6 +47,8 @@ Application::Application() {
 #else
     aec_mode_ = kAecOff;
 #endif
+    // 当前用户查询
+    current_user_query_ = ""; 
 
     esp_timer_create_args_t clock_timer_args = {
         .callback = [](void* arg) {
@@ -327,6 +331,25 @@ void Application::StopListening() {
 }
 
 void Application::Start() {
+    // 启动时先检查是否有缓存，若有则上传
+    ESP_LOGI(TAG, "Application starting...");
+      // 等待网络连接就绪WaitForNetworkReady();，目前用不到，功能也没完善，无法编译，暂时保留，待后续完善后使用
+
+    // 初始化本地MQTT协议
+    local_mqtt_ = std::make_unique<LocalMqttProtocol>();
+    if (local_mqtt_->Initialize()) {
+        ESP_LOGI(TAG, "Local MQTT initialized successfully");
+        // 启动本地MQTT客户端连接
+        local_mqtt_->Start();
+    } else {
+        ESP_LOGE(TAG, "Failed to initialize local MQTT");
+    }
+
+    // Print heap stats
+    SystemInfo::PrintHeapStats();
+    
+   
+
     auto& board = Board::GetInstance();
     SetDeviceState(kDeviceStateStarting);
 
@@ -428,19 +451,38 @@ void Application::Start() {
                 auto text = cJSON_GetObjectItem(root, "text");
                 if (cJSON_IsString(text)) {
                     ESP_LOGI(TAG, "<< %s", text->valuestring);
+                    // Schedule([this, display, message = std::string(text->valuestring)]() {
+                    //     display->SetChatMessage("assistant", message.c_str());
+                    // });
                     Schedule([this, display, message = std::string(text->valuestring)]() {
-                        display->SetChatMessage("assistant", message.c_str());
+                    display->SetChatMessage("assistant", message.c_str());
                     });
+                    // 上传聊天记录
+                    if (!current_user_query_.empty()) {
+                        UploadChatData(current_user_query_, std::string(text->valuestring), 1);
+                        current_user_query_.clear();
+                    }
+
                 }
             }
         } else if (strcmp(type->valuestring, "stt") == 0) {
+            // auto text = cJSON_GetObjectItem(root, "text");
+            // if (cJSON_IsString(text)) {
+            //     ESP_LOGI(TAG, ">> %s", text->valuestring);
+            //     Schedule([this, display, message = std::string(text->valuestring)]() {
+            //         display->SetChatMessage("user", message.c_str());
+            //     });
+            // }
             auto text = cJSON_GetObjectItem(root, "text");
             if (cJSON_IsString(text)) {
                 ESP_LOGI(TAG, ">> %s", text->valuestring);
                 Schedule([this, display, message = std::string(text->valuestring)]() {
                     display->SetChatMessage("user", message.c_str());
                 });
+                // 保存用户查询，等待回复后一起上传
+                current_user_query_ = std::string(text->valuestring);
             }
+
         } else if (strcmp(type->valuestring, "llm") == 0) {
             auto emotion = cJSON_GetObjectItem(root, "emotion");
             if (cJSON_IsString(emotion)) {
@@ -504,9 +546,22 @@ void Application::Start() {
         audio_service_.PlaySound(Lang::Sounds::OGG_SUCCESS);
     }
 
-    // Print heap stats
-    SystemInfo::PrintHeapStats();
 }
+
+// void Application::WaitForNetworkReady() {
+//     // 等待 WiFi 连接完成
+//     int retry_count = 0;
+//     while (retry_count < 30) {  // 30秒超时
+//         if (esp_wifi_sta_get_connect_status() == WIFI_STA_CONNECTED) {
+//             break;
+//         }
+//         vTaskDelay(1000 / portTICK_PERIOD_MS);
+//         retry_count++;
+//     }
+    
+//     // 额外等待 TCP/IP 栈初始化
+//     vTaskDelay(2000 / portTICK_PERIOD_MS);
+// }
 
 void Application::OnClockTimer() {
     clock_ticks_++;
@@ -770,4 +825,40 @@ void Application::SetAecMode(AecMode mode) {
 
 void Application::PlaySound(const std::string_view& sound) {
     audio_service_.PlaySound(sound);
+}
+
+
+// 新增处理聊天记录上传的方法
+void Application::UploadChatData(const std::string& user_query, const std::string& device_response, int status) {
+    if (!local_mqtt_) {
+        ESP_LOGE(TAG, "Local MQTT not initialized");
+        return;
+    }
+    
+    ChatRecord record;
+    record.device_id = local_mqtt_->GetClientId();
+    record.timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    record.user_query = user_query;
+    record.device_response = device_response;
+    record.status = status;
+    
+    bool success = local_mqtt_->UploadChatRecord(record);
+    
+    // 更新显示状态
+    auto& board = Board::GetInstance();
+    auto display = board.GetDisplay();
+    if (display) {
+        if (success) {
+            display->ShowNotification("记录已同步");
+        } else {
+            display->ShowNotification("同步失败");
+        }
+    }
+}
+
+// 在语音交互完成的地方调用上传方法
+void Application::OnSpeechInteractionCompleted(const std::string& user_text, const std::string& response_text) {
+    // 上传聊天记录
+    UploadChatData(user_text, response_text, 1); // 1表示成功
 }

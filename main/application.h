@@ -17,6 +17,10 @@
 #include "audio_service.h"
 #include "device_state_event.h"
 
+// 前向声明
+class LocalMqttProtocol;
+struct ChatRecord;
+
 #define MAIN_EVENT_SCHEDULE (1 << 0)
 #define MAIN_EVENT_SEND_AUDIO (1 << 1)
 #define MAIN_EVENT_WAKE_WORD_DETECTED (1 << 2)
@@ -61,6 +65,10 @@ public:
     void PlaySound(const std::string_view& sound);
     AudioService& GetAudioService() { return audio_service_; }
 
+    // 添加聊天记录上传方法
+    void UploadChatData(const std::string& user_query, const std::string& device_response, int status);
+    void OnSpeechInteractionCompleted(const std::string& user_text, const std::string& response_text);
+
 private:
     Application();
     ~Application();
@@ -68,6 +76,7 @@ private:
     std::mutex mutex_;
     std::deque<std::function<void()>> main_tasks_;
     std::unique_ptr<Protocol> protocol_;
+    std::unique_ptr<LocalMqttProtocol> local_mqtt_;  // 添加本地MQTT客户端
     EventGroupHandle_t event_group_ = nullptr;
     esp_timer_handle_t clock_timer_handle_ = nullptr;
     volatile DeviceState device_state_ = kDeviceStateUnknown;
@@ -75,6 +84,7 @@ private:
     AecMode aec_mode_ = kAecOff;
     std::string last_error_message_;
     AudioService audio_service_;
+    std::string current_user_query_;  // 添加用户查询缓存
 
     bool has_server_time_ = false;
     bool aborted_ = false;
@@ -86,6 +96,7 @@ private:
     void ShowActivationCode(const std::string& code, const std::string& message);
     void OnClockTimer();
     void SetListeningMode(ListeningMode mode);
+    //新增等待网络准备方法void WaitForNetworkReady(); 
 };
 
 #endif // _APPLICATION_H_
