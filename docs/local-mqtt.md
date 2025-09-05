@@ -35,7 +35,7 @@
 | 主控芯片 | ESP32-S3 | 运行小智AI语音助手 |
 | 网络模块 | 内置Wi-Fi | 连接MQTT服务器 |
 
-### 2.2 软件环境
+### 2.2 软件环境(2025年9月初)
 
 | 软件 / 工具 | 版本 / 型号 | 用途 |
 |-------------|-------------|------|
@@ -66,10 +66,11 @@
 
 关键成员变量：
 ```cpp
-std::string default_endpoint_ = "192.168.3.11:1883";  // 默认服务器地址
-std::string default_username_ = "xiaozhi";             // 默认用户名
-std::string default_password_ = "123456";              // 默认密码
-std::string client_id_;                                // 客户端ID
+//文件路径main\protocols\local_mqtt_protocol.h
+std::string default_endpoint_ = "192.168.3.11:1883";   // 测试时服务器地址，修改成你自己的
+std::string default_username_ = "xiaozhi";             // 默认用户名，客户端认证时，修改成你自己的
+std::string default_password_ = "123456";              // 默认密码，客户端认证时，修改成你自己的
+std::string client_id_;                                // 客户端ID，由设备MAC地址生成
 std::string chat_topic_;                               // 聊天记录发布主题
 bool connected_ = false;                               // 连接状态
 ```
