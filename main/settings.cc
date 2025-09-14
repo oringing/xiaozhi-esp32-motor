@@ -39,13 +39,18 @@ std::string Settings::GetString(const std::string& key, const std::string& defau
 
 void Settings::SetString(const std::string& key, const std::string& value) {
     if (read_write_) {
-        ESP_ERROR_CHECK(nvs_set_str(nvs_handle_, key.c_str(), value.c_str()));
+        esp_err_t err = nvs_set_str(nvs_handle_, key.c_str(), value.c_str());
+        if (err == ESP_ERR_NVS_NOT_ENOUGH_SPACE) {
+            ESP_LOGW(TAG, "NVS space not enough for key: %s, value length: %d", key.c_str(), value.length());
+            // 不再使用ESP_ERROR_CHECK导致系统重启，而是记录警告
+            return;
+        }
+        ESP_ERROR_CHECK(err);  // 对于其他错误仍然检查
         dirty_ = true;
     } else {
         ESP_LOGW(TAG, "Namespace %s is not open for writing", ns_.c_str());
     }
 }
-
 int32_t Settings::GetInt(const std::string& key, int32_t default_value) {
     if (nvs_handle_ == 0) {
         return default_value;

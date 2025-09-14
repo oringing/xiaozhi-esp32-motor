@@ -48,7 +48,7 @@ public:
 
 private:
     // 默认EMQX服务器配置
-    std::string default_endpoint_ = "192.168.3.11:1883";
+    std::string default_endpoint_ = "192.168.94.176:1883";
     std::string default_username_ = "xiaozhi";
     std::string default_password_ = "123456";
     std::string client_id_;
@@ -77,6 +77,8 @@ private:
     
     // 清除已上传的缓存记录
     bool ClearCachedRecords(const std::vector<int>& indices);
+
+    bool ClearAllCachedRecords();
 };
 
 #endif // LOCAL_MQTT_PROTOCOL_H

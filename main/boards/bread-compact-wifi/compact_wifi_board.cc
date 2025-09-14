@@ -11,6 +11,7 @@
 #include "assets/lang_config.h"
 #include "motor/motor.h"  
 #include "motor_control.h"// 引入电机控制类头文件
+#include "motor/distance_sensor.h"  // 引入距离传感器头文件
 
 #include <wifi_station.h>
 #include <esp_log.h>

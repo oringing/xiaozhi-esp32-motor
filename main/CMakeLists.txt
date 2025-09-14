@@ -12,6 +12,7 @@ set(SOURCES "audio/audio_codec.cc"
             "led/circular_strip.cc"
             "led/gpio_led.cc"
             "motor/motor.cc" #新增电机驱动
+            "motor/distance_sensor.cc"  # 添加距离传感器实现文件
             "display/display.cc"
             "display/lcd_display.cc"
             "display/oled_display.cc"

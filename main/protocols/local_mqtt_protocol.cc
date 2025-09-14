@@ -26,6 +26,8 @@ LocalMqttProtocol::~LocalMqttProtocol() {
 bool LocalMqttProtocol::Initialize() {
     // 从设置中加载配置，若无则使用默认值
     Settings settings("local_mqtt", true);
+    // 临时添加这一行来清除旧配置
+    settings.EraseKey("endpoint");
     
     endpoint_ = settings.GetString("endpoint", default_endpoint_);
     username_ = settings.GetString("username", default_username_);
@@ -217,6 +219,9 @@ bool LocalMqttProtocol::SaveToCache(const std::string& json_data) {
     // 保存新记录
     std::string key = "record_" + std::to_string(count);
     cache.SetString(key.c_str(), json_data);
+    
+    // 只有在设置字符串成功的情况下才增加计数
+    // 避免计数错误导致后续读取问题
     cache.SetInt("count", count + 1);
     
     ESP_LOGI(TAG, "Saved record to cache, key: %s", key.c_str());
@@ -240,6 +245,21 @@ std::vector<std::string> LocalMqttProtocol::LoadFromCache() {
     return records;
 }
 
+bool LocalMqttProtocol::ClearAllCachedRecords() {
+    Settings cache(CACHE_NAMESPACE, true);
+    
+    int count = cache.GetInt("count", 0);
+    
+    // 清除所有记录
+    for (int i = 0; i < count; i++) {
+        std::string key = "record_" + std::to_string(i);
+        cache.EraseKey(key.c_str());
+    }
+    
+    cache.SetInt("count", 0);
+    ESP_LOGI(TAG, "Cleared all cached records");
+    return true;
+}
 bool LocalMqttProtocol::ClearCachedRecords(const std::vector<int>& indices) {
     Settings cache(CACHE_NAMESPACE, true);
     int count = cache.GetInt("count", 0);

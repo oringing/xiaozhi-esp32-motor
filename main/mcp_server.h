@@ -18,7 +18,8 @@ using ReturnValue = std::variant<bool, int, std::string>;
 enum PropertyType {
     kPropertyTypeBoolean,
     kPropertyTypeInteger,
-    kPropertyTypeString
+    kPropertyTypeString,
+    
 };
 
 class Property {

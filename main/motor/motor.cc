@@ -86,6 +86,7 @@ void MotorDriver::InitPwm()
         ESP_LOGE(TAG, "PWM pin does not support LEDC");
         return;
     }
+    
     // 配置PWM定时器（Timer1）
     ledc_timer_config_t timer_cfg;
     timer_cfg.speed_mode = MOTOR_LEDC_MODE;
@@ -102,7 +103,7 @@ void MotorDriver::InitPwm()
     }
 
     // 配置右侧PWM通道
-    ledc_channel_config_t right_ch_cfg;
+    ledc_channel_config_t right_ch_cfg = {};
     right_ch_cfg.gpio_num = right_pwm_pin_;
     right_ch_cfg.speed_mode = MOTOR_LEDC_MODE;
     right_ch_cfg.channel = right_pwm_ch_;
@@ -110,11 +111,16 @@ void MotorDriver::InitPwm()
     right_ch_cfg.duty = 0;  // 初始占空比0（停止）
     right_ch_cfg.hpoint = 0;
     right_ch_cfg.intr_type = LEDC_INTR_DISABLE;
+    right_ch_cfg.flags.output_invert = 0; // 确保不反相输出
     right_ch_cfg.sleep_mode = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD;// 默认模式
-    ledc_channel_config(&right_ch_cfg);
+    esp_err_t right_err = ledc_channel_config(&right_ch_cfg);
+    if (right_err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to configure right PWM channel: %d", right_err);
+        return;
+    }
 
     // 配置左侧PWM通道
-    ledc_channel_config_t left_ch_cfg;
+    ledc_channel_config_t left_ch_cfg = {};
     left_ch_cfg.gpio_num = left_pwm_pin_;
     left_ch_cfg.speed_mode = MOTOR_LEDC_MODE;
     left_ch_cfg.channel = left_pwm_ch_;
@@ -122,8 +128,16 @@ void MotorDriver::InitPwm()
     left_ch_cfg.duty = 0;  // 初始占空比0（停止）
     left_ch_cfg.hpoint = 0;
     left_ch_cfg.intr_type = LEDC_INTR_DISABLE;
+    left_ch_cfg.flags.output_invert = 0; // 确保不反相输出
     left_ch_cfg.sleep_mode = LEDC_SLEEP_MODE_NO_ALIVE_NO_PD; // 默认模式
-    ledc_channel_config(&left_ch_cfg);
+    esp_err_t left_err = ledc_channel_config(&left_ch_cfg);
+    if (left_err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to configure left PWM channel: %d", left_err);
+        return;
+    }
+    
+    ESP_LOGI(TAG, "PWM channels configured successfully. Right pin: %d, Left pin: %d", 
+             right_pwm_pin_, left_pwm_pin_);
 }
 
 // 停止所有电机

@@ -852,6 +852,7 @@ void Application::UploadChatData(const std::string& user_query, const std::strin
         if (success) {
             display->ShowNotification("记录已同步");
         } else {
+            // 显示更明确的错误信息
             display->ShowNotification("同步失败");
         }
     }
