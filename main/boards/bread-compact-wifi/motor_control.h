@@ -12,6 +12,8 @@
 #include "driver/gpio.h"
 #include "motor/motor.h"
 #include "motor/distance_sensor.h"  // 引入距离传感器头文件
+#include "application.h"  // 添加Application头文件包含
+#include "assets/lang_config.h" // 添加Lang::Sounds头文件包含
 
 // ESP32-S3-DevKitC-1 支持的PWM引脚列表（仅限此开发板）
 //44针开发板：GPIO 0-21，33-48（包含边界0、21、33、48）
@@ -50,7 +52,11 @@ class MotorControl {
     void TurnLeft(int speed, int time);
     void TurnRight(int speed, int time);
     void Stop();
-    void MoveDistance(float target_meters, int speed);  // 新增：按距离前进
+    // 添加转圈方法
+    void SpinClockwise(int speed, int time);
+    void SpinCounterClockwise(int speed, int time);
+    // 新增：按距离前进、后退
+    void MoveDistance(float target_meters, int speed);  
     int GetMotorSpeed() const;
     int GetRunTime() const;
 

@@ -206,6 +206,11 @@ public:
         return display_;
     }
 
+    // 重写 GetMotorControl 方法以返回 motor_control_ 指针
+    virtual void* GetMotorControl() override {
+        return motor_control_;
+    }
+
         // 析构函数：释放电机控制资源
     virtual ~CompactWifiBoard() {
         if (motor_control_ != nullptr) {

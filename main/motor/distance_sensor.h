@@ -10,9 +10,9 @@
 
 // 硬件配置宏定义（集中管理）
 #define IR_RX_LEFT       GPIO_NUM_17       // 左轮编码器信号引脚
-#define IR_RX_RIGHT      GPIO_NUM_18       // 右轮编码器信号引脚
+#define IR_RX_RIGHT      GPIO_NUM_8       // 右轮编码器信号引脚
 #define WHEEL_DIAMETER_DEFAULT 0.066       // 默认车轮直径（米）,也就是66 mm
-#define ENCODER_SLOTS    10                // 10个周期转动一圈，编码盘镂空槽和遮挡条数量N=20，每转一圈产生20个脉冲，每个周期2个脉冲
+#define ENCODER_SLOTS    20                // 编码盘镂空槽和遮挡条数量N=20，每转一圈产生20个脉冲
 #define PI               3.14159f          // π常量
 #define LOG_PULSE_INTERVAL 10              // 日志打印间隔（每10个脉冲打印一次）
 #define NO_SIGNAL_TIMEOUT 5000             // 无信号超时时间（毫秒）

@@ -40,6 +40,12 @@ public:
     // 右转（左侧电机转动，右侧电机停止）
     void TurnRight(uint8_t speed);
 
+    // 原地顺时针转圈（左轮前进，右轮后退）
+    void SpinClockwise(uint8_t speed);
+
+    // 原地逆时针转圈（左轮后退，右轮前进）
+    void SpinCounterClockwise(uint8_t speed);
+
     // 设置定时自动停止
     void SetAutoStop(uint32_t time_ms);
 

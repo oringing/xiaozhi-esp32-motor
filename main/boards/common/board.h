@@ -50,6 +50,8 @@ public:
     virtual void SetPowerSaveMode(bool enabled) = 0;
     virtual std::string GetBoardJson() = 0;
     virtual std::string GetDeviceStatusJson() = 0;
+    virtual void* GetMotorControl() { return nullptr; }
+
 };
 
 #define DECLARE_BOARD(BOARD_CLASS_NAME) \

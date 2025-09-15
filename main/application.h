@@ -96,7 +96,8 @@ private:
     void ShowActivationCode(const std::string& code, const std::string& message);
     void OnClockTimer();
     void SetListeningMode(ListeningMode mode);
-    //新增等待网络准备方法void WaitForNetworkReady(); 
+    
+    void SpinAndPlaySound(bool clockwise, uint8_t speed, const std::string& sound);
 };
 
 #endif // _APPLICATION_H_

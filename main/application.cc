@@ -9,6 +9,7 @@
 #include "assets/lang_config.h"
 #include "mcp_server.h"
 #include "local_mqtt_protocol.h" //新增本地MQTT协议客户端
+#include "boards/bread-compact-wifi/motor_control.h" // 添加电机控制头文件
 
 
 #include <cstring>
@@ -544,6 +545,7 @@ void Application::Start() {
         display->SetChatMessage("system", "");
         // Play the success sound to indicate the device is ready
         audio_service_.PlaySound(Lang::Sounds::OGG_SUCCESS);
+    
     }
 
 }
@@ -860,6 +862,35 @@ void Application::UploadChatData(const std::string& user_query, const std::strin
 
 // 在语音交互完成的地方调用上传方法
 void Application::OnSpeechInteractionCompleted(const std::string& user_text, const std::string& response_text) {
-    // 上传聊天记录
-    UploadChatData(user_text, response_text, 1); // 1表示成功
+    ESP_LOGI(TAG, "Speech interaction completed. User: %s, Response: %s", user_text.c_str(), response_text.c_str());
+    current_user_query_ = "";
+
+    // 可以在这里添加转圈逻辑，例如根据特定关键词触发
+    if (user_text.find("转圈") != std::string::npos) {
+        SpinAndPlaySound(true, 200, "spin");  // 顺时针转圈
+    }
+}
+
+// 添加转圈并播放音频的方法
+void Application::SpinAndPlaySound(bool clockwise, uint8_t speed, const std::string& sound) {
+    // 播放音频
+    if (sound == "spin") {
+        // 使用我们自定义的spin.ogg音频文件
+        audio_service_.PlaySound(Lang::Sounds::OGG_SPIN);
+    } else {
+        // 使用默认的音频文件
+        audio_service_.PlaySound(sound);
+    }
+    
+    // 执行转圈动作
+    auto& board = Board::GetInstance();
+    auto* motor_control = static_cast<MotorControl*>(board.GetMotorControl());
+    
+    if (motor_control) {
+        if (clockwise) {
+            motor_control->SpinClockwise(speed, 2); // 转2秒
+        } else {
+            motor_control->SpinCounterClockwise(speed, 2); // 转2秒
+        }
+    }
 }

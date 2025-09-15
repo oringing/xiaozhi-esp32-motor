@@ -169,6 +169,7 @@ void MotorDriver::Forward(uint8_t speed)
     ESP_LOGI(TAG, "Moving forward with speed: %u", speed);
 }
 
+
 // 后退动作
 void MotorDriver::Backward(uint8_t speed) 
 {
@@ -183,6 +184,7 @@ void MotorDriver::Backward(uint8_t speed)
     SetPwmSpeed(left_pwm_ch_, left_pwm_pin_, speed);
     ESP_LOGI(TAG, "Moving backward with speed: %u", speed);
 }
+
 
 // 左转动作
 void MotorDriver::TurnLeft(uint8_t speed) 
@@ -212,6 +214,36 @@ void MotorDriver::TurnRight(uint8_t speed)
     SetPwmSpeed(right_pwm_ch_, right_pwm_pin_, 0);  // 右侧电机停止，速度为0，
     SetPwmSpeed(left_pwm_ch_, left_pwm_pin_,speed);
     ESP_LOGI(TAG, "Turning right with speed: %u", speed);
+}
+
+// 原地顺时针转圈（左轮前进，右轮后退）
+void MotorDriver::SpinClockwise(uint8_t speed) 
+{
+    // 右侧电机反向
+    gpio_set_level(in_pins_[0], 0);
+    gpio_set_level(in_pins_[1], 1);
+    // 左侧电机正向
+    gpio_set_level(in_pins_[2], 1);
+    gpio_set_level(in_pins_[3], 0);
+
+    SetPwmSpeed(right_pwm_ch_, right_pwm_pin_, speed);
+    SetPwmSpeed(left_pwm_ch_, left_pwm_pin_, speed);
+    ESP_LOGI(TAG, "Spinning clockwise with speed: %u", speed);
+}
+
+// 原地逆时针转圈（左轮后退，右轮前进）
+void MotorDriver::SpinCounterClockwise(uint8_t speed) 
+{
+    // 右侧电机正向
+    gpio_set_level(in_pins_[0], 1);
+    gpio_set_level(in_pins_[1], 0);
+    // 左侧电机反向
+    gpio_set_level(in_pins_[2], 0);
+    gpio_set_level(in_pins_[3], 1);
+
+    SetPwmSpeed(right_pwm_ch_, right_pwm_pin_, speed);
+    SetPwmSpeed(left_pwm_ch_, left_pwm_pin_, speed);
+    ESP_LOGI(TAG, "Spinning counter-clockwise with speed: %u", speed);
 }
 
 // 设置PWM占空比
