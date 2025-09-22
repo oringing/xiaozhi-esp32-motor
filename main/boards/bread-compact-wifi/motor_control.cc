@@ -304,13 +304,6 @@ void MotorControl::SpinClockwise(int speed, int time) {
   SetParameters(speed, time);
   motor_driver_.SpinClockwise(motor_speed_);
 
-  // 播放转圈音频
-  std::string_view spin_sound(
-    static_cast<const char*>(spin_ogg_start),
-    static_cast<size_t>(spin_ogg_end - spin_ogg_start)
-  );
-  Application::GetInstance().PlaySound(spin_sound);
-
   // 启动停止定时器
   if (stop_timer_ != nullptr) {
     xTimerStop(stop_timer_, portMAX_DELAY);
@@ -325,13 +318,6 @@ void MotorControl::SpinClockwise(int speed, int time) {
 void MotorControl::SpinCounterClockwise(int speed, int time) {
   SetParameters(speed, time);
   motor_driver_.SpinCounterClockwise(motor_speed_);
-
-  // 播放转圈音频
-  std::string_view spin_sound(
-    static_cast<const char*>(spin_ogg_start),
-    static_cast<size_t>(spin_ogg_end - spin_ogg_start)
-  );
-  Application::GetInstance().PlaySound(spin_sound);
 
   // 启动停止定时器
   if (stop_timer_ != nullptr) {

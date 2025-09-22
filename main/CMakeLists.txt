@@ -303,9 +303,6 @@ if(CONFIG_IDF_TARGET_ESP32)
                              )
 endif()
 
-# 特别处理spin.ogg文件，确保在需要时被嵌入
-set(SPIN_OGG_FILE "${CMAKE_CURRENT_SOURCE_DIR}/assets/common/spin.ogg")
-list(APPEND COMMON_SOUNDS ${SPIN_OGG_FILE})
 
 idf_component_register(SRCS ${SOURCES}
                     EMBED_FILES ${LANG_SOUNDS} ${COMMON_SOUNDS}

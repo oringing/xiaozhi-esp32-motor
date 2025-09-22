@@ -96,8 +96,6 @@ private:
     void ShowActivationCode(const std::string& code, const std::string& message);
     void OnClockTimer();
     void SetListeningMode(ListeningMode mode);
-    
-    void SpinAndPlaySound(bool clockwise, uint8_t speed, const std::string& sound);
 };
 
 #endif // _APPLICATION_H_
